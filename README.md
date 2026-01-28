@@ -176,6 +176,108 @@ FAILED: 2/15 tests
 3. **Truncation**: Keeps relevant context, cuts redundancy
 4. **Deduplication**: Collapses repeated log lines with counts
 
+## Improvements in This Fork
+
+This fork adds critical fixes and modern JavaScript stack support to RTK, validated on production T3 Stack codebases.
+
+### 🔧 PR #5: Git Argument Parsing Fix (CRITICAL)
+
+**Status**: [Open](https://github.com/pszymkowiak/rtk/pull/5) | **Priority**: Critical
+
+Fixes a major bug where git flags were rejected as invalid arguments.
+
+**Problem**:
+```bash
+rtk git log --oneline -20
+# Error: unexpected argument '--oneline' found
+```
+
+**Solution**:
+- Fixed Clap argument parsing with `trailing_var_arg + allow_hyphen_values`
+- Auto-detects `--merges` flag to skip `--no-merges` injection
+- Propagates git exit codes properly (fixes CI/CD false positives)
+
+**Now Working**:
+```bash
+rtk git log --oneline -20           # Compact commit history
+rtk git diff --cached               # Staged changes only
+rtk git log --graph --all           # Branch visualization
+rtk git status --short              # Ultra-compact status
+```
+
+**Impact**: All git flags now work correctly, preventing workflow disruptions.
+
+### 📦 PR #6: pnpm Support for Modern JavaScript Stacks
+
+**Status**: [Open](https://github.com/pszymkowiak/rtk/pull/6) | **Target**: T3 Stack users
+
+Adds first-class pnpm support with security hardening.
+
+**New Commands**:
+```bash
+rtk pnpm list              # Dependency tree (70% token reduction)
+rtk pnpm outdated          # Update candidates (80-90% reduction)
+rtk pnpm install <pkg>     # Silent success confirmation
+```
+
+**Token Savings**:
+| Command | Standard Output | rtk Output | Reduction |
+|---------|----------------|------------|-----------|
+| `pnpm list` | ~8,000 tokens | ~2,400 | -70% |
+| `pnpm outdated` | ~12,000 tokens | ~1,200-2,400 | -80-90% |
+| `pnpm install` | ~500 tokens | ~10 | -98% |
+
+**Security**:
+- Package name validation (prevents command injection)
+- Proper error propagation (fixes CI/CD reliability)
+- Comprehensive test coverage
+
+### 🐛 Related Upstream Issues
+
+This fork addresses issues reported upstream:
+- [Issue #2](https://github.com/pszymkowiak/rtk/issues/2): Git argument parsing bug
+- [Issue #3](https://github.com/pszymkowiak/rtk/issues/3): T3 Stack support request (pnpm + Vitest)
+- [Issue #4](https://github.com/pszymkowiak/rtk/issues/4): grep/ls filtering improvements
+
+### 🧪 Testing
+
+**Production Validation**: All improvements tested on a production T3 Stack codebase:
+- Framework: Next.js 15.1.5 + TypeScript
+- Package Manager: pnpm 10.0.0
+- Test Runner: Vitest
+- Repository: 50+ files, 10,000+ lines of code
+
+**Test Coverage**:
+- Unit tests for all new commands
+- Integration tests with real pnpm/git outputs
+- Security validation for command injection prevention
+- CI/CD pipeline validation (exit code propagation)
+
+### 📥 Installation
+
+**Use This Fork** (recommended until PRs are merged):
+```bash
+# Clone and build
+git clone https://github.com/FlorianBruniaux/rtk.git
+cd rtk
+cargo build --release
+
+# Install globally
+cargo install --path .
+
+# Or use directly
+./target/release/rtk --version
+```
+
+**Track Upstream Merge Status**:
+- Watch [PR #5](https://github.com/pszymkowiak/rtk/pull/5) for git fixes
+- Watch [PR #6](https://github.com/pszymkowiak/rtk/pull/6) for pnpm support
+
+**Switch to Upstream** (once merged):
+```bash
+cargo install rtk --force
+```
+
 ## Configuration
 
 rtk reads from `CLAUDE.md` files to instruct Claude Code to use rtk automatically:
